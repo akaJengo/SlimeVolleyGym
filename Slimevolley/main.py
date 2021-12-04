@@ -17,16 +17,15 @@ def openCsv_to_plot(dir):
         for row in reader:
             score_history.append(float(row['rollout/ep_rew_mean']))
 
-    figure_file = "Slimevolley/Plots/SlimeVolley_"+ TIME
     x = [i+1 for i in range(len(score_history))]
-    plot_learning_curve(x, score_history, figure_file)
+    plot_learning_curve(x, score_history, dir+"/plot.png")
 pass
 
 if __name__ == "__main__":
 
-    ITERATIONS = 306 
+    ITERATIONS = 20 
     TIME = time.strftime ('%Y_%m_%d_%H_%S')
-    LOGDIR = "tmp/" + "/Eval_Slime-v1_"+ TIME
+    LOGDIR = "tmp/"+str(ITERATIONS)+"_Slime-v1_"+ TIME
 
     newlog = configure(folder=LOGDIR)
     
@@ -34,27 +33,16 @@ if __name__ == "__main__":
     model = PPO("MlpPolicy", env, verbose=1)
     model.set_logger(newlog)
 
-    time_steps = ITERATIONS*4096
+    time_steps = ITERATIONS*2048
 
-    #model.learn(total_timesteps=time_steps)
-    #model.save(os.path.join(LOGDIR, "final_model")) 
+    model.learn(total_timesteps=time_steps)
+    model.save(os.path.join(LOGDIR, "final_model")) 
 
     test = "tmp/Eval_Slime-v1_"+"2021_12_03_18_14"
-    model = model.load(test+"/final_model")
+    #model = model.load(test+"/final_model")
 
-    openCsv_to_plot(test)
+    openCsv_to_plot(LOGDIR)
 
-    """
-    with open(LOGDIR+"/progress.csv", newline='') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            score_history.append(float(row['rollout/ep_rew_mean']))
-
-    figure_file = "Slimevolley/Plots/SlimeVolley_"+ TIME
-    x = [i+1 for i in range(len(score_history))]
-
-    plot_learning_curve(x, score_history, figure_file)
-    """
     obs = env.reset()
     while True:
     #for i in range(100):

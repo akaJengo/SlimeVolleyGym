@@ -10,8 +10,19 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.logger import configure
 
-if __name__ == "__main__":
+def openCsv_to_plot(dir):
     score_history = []
+    with open(dir+"/progress.csv", newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            score_history.append(float(row['rollout/ep_rew_mean']))
+
+    figure_file = "Slimevolley/Plots/SlimeVolley_"+ TIME
+    x = [i+1 for i in range(len(score_history))]
+    plot_learning_curve(x, score_history, figure_file)
+pass
+
+if __name__ == "__main__":
 
     ITERATIONS = 306 
     TIME = time.strftime ('%Y_%m_%d_%H_%S')
@@ -30,6 +41,8 @@ if __name__ == "__main__":
 
     test = "tmp/Eval_Slime-v1_"+"2021_12_03_18_14"
     model = model.load(test+"/final_model")
+
+    openCsv_to_plot(test)
 
     """
     with open(LOGDIR+"/progress.csv", newline='') as csvfile:

@@ -1,35 +1,51 @@
+import time
+import os
+import csv
 import gym
 import slimevolleygym
-import numpy as np
+from gym import wrappers
+#from matplotlib.pyplot import figure
+from utils import plot_learning_curve
 
-from PPO import Agent
+from stable_baselines3 import PPO
+from stable_baselines3.common.env_util import make_vec_env
+from stable_baselines3.common.logger import configure
 
 if __name__ == "__main__":
-    env = gym.make('SlimeVolley-v0')
-    N = 20
-    batch_size = 5
-    n_epochs = 4
-    alpha = 0.0003
+    score_history = []
 
-    switcher = {
-        0: [0,0,0],
-        1: [1,0,0],
-        2: [0,1,0],
-        3: [0,0,1]
-    }
+    NUM_TIMESTEPS = 30000
+    TIME = time.strftime ('%Y_%m_%d_%H_%S')
+    LOGDIR = "tmp/" + "/Eval_Slime-v1_"+ TIME
 
-    agent = Agent(n_actions=env.action_space.n, batch_size=batch_size, 
-                    alpha=alpha, n_epochs=n_epochs, 
-                    input_dims=env.observation_space.shape)
+    newlog = configure(folder=LOGDIR)
+    
+    env = make_vec_env("SlimeVolley-v0", n_envs=1)
+    model = PPO("MlpPolicy", env, verbose=1)
+    model.set_logger(newlog)
+
+    #model.learn(total_timesteps=NUM_TIMESTEPS)
+    #model.save(os.path.join(LOGDIR, "final_model")) 
+
+    test = "tmp/" + "/Eval_Slime-v1_"+"2021_12_03_18_14"
+    model = model.load(test+"/final_model")
+
+    """
+    with open(LOGDIR+"/progress.csv", newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            score_history.append(float(row['rollout/ep_rew_mean']))
+
+    figure_file = "Slimevolley/Plots/SlimeVolley_"+ TIME
+    x = [i+1 for i in range(len(score_history))]
+
+    plot_learning_curve(x, score_history, figure_file)
+    """
     obs = env.reset()
-    action, prob, val = agent.choose_action(obs)
-    actual_action = switcher[action]
-    print(actual_action)
-    """
-    for i in range(10):
-        obs = env.reset()
-        action, prob, val = agent.choose_action(obs)
-        observation_, reward, done, info = env.step([0,0,0])
-        print(action)
-    """
-    pass
+    while True:
+    #for i in range(100):
+        action, _states = model.predict(obs)
+        obs, rewards, dones, info = env.step(action)
+        env.render()
+
+pass
